@@ -1,6 +1,6 @@
 <template>
     <header class="mb-20">
-        <BaseNavigation />
-        <BaseActionBar />
+        <BaseNavigation class="lg:block hidden"/>
+        <BaseActionBar class="lg:flex hidden"/>
     </header>
 </template>
