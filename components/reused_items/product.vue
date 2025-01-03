@@ -34,13 +34,13 @@ const truncateText = (text: string, length: number) => {
 <template>
     <NuxtLink :to="`/active-lots/${id}`">
         <div class="max-w-[240px] rounded-[16px] border border-[#EFF0F6] bg-[#FFFFFF] p-5">
-            <img :src="imageSrc" alt="Lot Image" class="mb-8">
+            <img :src="imageSrc" alt="Lot Image" class="md:mb-8 mb-4">
 
-            <p class="text-[20px] mb-5">
+            <p class="md:text-[20px] text-[14px] mb-5">
                 {{ truncateText(title, truncateLength) }}
             </p>
 
-            <p class="text-[24px]">
+            <p class="md:text-[24px] text-[20px]">
                 <span class="text-primary-500">{{ price }}</span> {{ currency }}
             </p>
         </div>

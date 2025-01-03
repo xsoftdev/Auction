@@ -2,8 +2,19 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', 'nuxt-swiper'],
+  modules: ['@nuxt/ui', 'nuxt-swiper', '@nuxtjs/color-mode'],
   nitro: {
     plugins: ["~/server/index.ts"]
+  },
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    hid: 'nuxt-color-mode-script',
+    globalName: '__NUXT_COLOR_MODE__',
+    componentName: 'ColorScheme',
+    classPrefix: '',
+    classSuffix: '-mode',
+    storage: 'localStorage', 
+    storageKey: 'theme'
   }
 })

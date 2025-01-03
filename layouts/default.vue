@@ -2,6 +2,6 @@
     <BaseContainer>
         <BaseHeader />
         <slot />
-        <BaseFooter />
+        <BaseFooter /> 
     </BaseContainer>                                                            
 </template>
