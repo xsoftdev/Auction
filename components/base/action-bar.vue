@@ -1,4 +1,4 @@
-<script lang="ts">
+<script setup lang="ts">
 import { ref } from 'vue';
 import { object, string, ref as yupRef, type InferType } from 'yup';
 import type { FormSubmitEvent } from '#ui/types';
@@ -36,10 +36,71 @@ const state = ref({
     password: undefined,
     name: undefined,
     confirmPassword: undefined,
+    isAuthentificate: false
+});
+
+onMounted(async () => {
+    if (typeof window !== 'undefined') {
+        const local = localStorage.getItem('auth_token');
+        if (local) {
+            state.value.isAuthentificate = true;
+
+            setTimeout(() => {
+                useFetch(`/api/authentificate/${local}`).then((res) => {
+                    state.value.name = res.data.value.user.username;
+                });
+            }, 1000)
+        }
+    }
 });
 
 async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
-    console.log(event.data);
+    if (event.data.modalType === 'reg') {
+        const { data, error } = await useFetch('/api/authentificate/create', {
+            method: 'POST',
+            body: {
+                username: state.value.name,
+                email: state.value.email,
+                password: state.value.confirmPassword,
+            },
+        });
+
+        if (error.value) {
+            console.error('Error during user creation:', error.value);
+        } else {
+            console.log('User created successfully:', data.value);
+
+            if (data.value.token) {
+                localStorage.setItem('auth_token', data.value.token);
+                console.log('Token stored in localStorage');
+                state.value.modalType = '';
+            } else {
+                console.error('No token received');
+            }
+        }
+    } else if (event.data.modalType === 'auth') {
+        const { data, error } = await useFetch('/api/authentificate/login', {
+            method: 'POST',
+            body: {
+                email: state.value.email,
+                password: state.value.password,
+            },
+        });
+
+        if (error.value) {
+            console.error('Error during user authentificate:', error.value);
+        } else {
+            console.log('User authentificated successfully:', data.value);
+
+            if (data.value.token) {
+                localStorage.setItem('auth_token', data.value.token);
+                console.log('Token stored in localStorage');
+                state.value.modalType = '';
+            } else {
+                console.error('No token received');
+            }
+        }
+    }
 }
 
 const toggleState = (key: keyof typeof state.value) => {
@@ -54,19 +115,6 @@ const closeModal = () => {
     state.value.modalType = '';
 };
 
-export default {
-    setup() {
-        return {
-            state,
-            toggleState,
-            openModal,
-            closeModal,
-            schema,
-            regSchema,
-            onSubmit,
-        };
-    },
-};
 </script>
 
 
@@ -85,15 +133,33 @@ export default {
             <UInput icon="i-heroicons-magnifying-glass-20-solid" size="xl" color="white" :trailing="false"
                 placeholder="Пошук" />
         </div>
-        <UButton size="xl" class="text-[24px] font-[400]" @click="openModal('reg')">
-            Зареєструватися
-        </UButton>
-        <UButton size="xl" variant="ghost" class="text-[24px] font-[400] text-gray-500" @click="openModal('auth')">
-            Увійти
-        </UButton>
+        <template v-if="!state.isAuthentificate">
+            <UButton size="xl" class="text-[24px] font-[400]" @click="openModal('reg')">
+                Зареєструватися
+            </UButton>
+            <UButton size="xl" variant="ghost" class="text-[24px] font-[400] text-gray-500" @click="openModal('auth')">
+                Увійти
+            </UButton>
+        </template>
+        <template v-else>
+            <div class="flex flex-row items-center">
+                <NuxtLink to="/clientarea" class="flex flex-row items-end mr-16">
+                    <img src="/icon/user.svg" alt="" class="w-8 h-8 mr-4">
+                    <template v-if="state.name">
+                        <p class="text-[20px] w-[120px]">{{ state.name }}</p>
+                    </template>
+                    <template v-else>
+                        <USkeleton class="bg-gray-400 w-[120px] h-[30px]"/>
+                    </template>
+                </NuxtLink>
+                <NuxtLink to="/clientarea/cart">
+                    <img src="/icon/cart1.svg" alt="" class="w-8 h-8">
+                </NuxtLink>
+            </div>
+        </template>
 
         <div class="absolute top-32 w-full bg-[#F5F6F8] border-black" v-if="state.menuCategories">
-            Отсутсвие базы данных.
+            <ReusedItemsCategoryMenu />
         </div>
 
         <ReusedItemsAuthModal v-if="state.modalType">
@@ -154,6 +220,7 @@ export default {
                 </UForm>
             </div>
         </ReusedItemsAuthModal>
-        <div class="overlay bg-[#00000080] fixed z-[20] w-full h-full left-0 top-0" v-if="state.modalType" @click="closeModal"/>
+        <div class="overlay bg-[#00000080] fixed z-[20] w-full h-full left-0 top-0" v-if="state.modalType"
+            @click="closeModal" />
     </section>
 </template>

@@ -13,6 +13,8 @@
     "@nuxt/ui": "^2.20.0",
     "@nuxtjs/color-mode": "^3.5.2",
     "bcryptjs": "^2.4.3",
+    "h3": "^1.13.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
     "nuxt": "^3.14.1592",
     "nuxt-swiper": "^2.0.0",

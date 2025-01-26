@@ -16,5 +16,11 @@ export default defineNuxtConfig({
     classSuffix: '-mode',
     storage: 'localStorage', 
     storageKey: 'theme'
+  },
+  runtimeConfig: {
+    public: {
+      dbConnection: process.env.URI,
+      jwt: process.env.SECRET
+    }
   }
 })

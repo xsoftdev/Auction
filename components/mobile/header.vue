@@ -2,22 +2,37 @@
 import { ref, watch } from 'vue';
 import { object, string, ref as yupRef, type InferType } from 'yup';
 import type { FormSubmitEvent } from '#ui/types';
+onMounted(async () => {
+    if (typeof window !== 'undefined') {
+        const local = localStorage.getItem('auth_token');
+        if (local) {
+            state.value.isAuthentificate = true;
 
-// Состояние меню
+            setTimeout(() => {
+                useFetch(`/api/authentificate/${local}`).then((res) => {
+                    state.value.name = res.data.value.user.username;
+                });
+            }, 1000)
+        }
+    }
+}); 
 const menu = ref({
     links: false,
     search: false,
 });
-
-// Состояние модального окна
+const state = ref({
+    email: undefined,
+    password: undefined,
+    name: undefined,
+    confirmPassword: undefined,
+    isAuthentificate: false
+});
 const modalType = ref<'auth' | 'reg' | ''>('');
 
-// Методы управления меню
 const toggleMenu = (menuType: 'links' | 'search') => {
     menu.value[menuType] = !menu.value[menuType];
 };
 
-// Методы управления модальным окном
 const openModal = (type: 'auth' | 'reg') => {
     modalType.value = type;
 };
@@ -26,7 +41,6 @@ const closeModal = () => {
     modalType.value = '';
 };
 
-// Наблюдатель для блокировки скролла
 watch(
     () => ({ menu: menu.value, modal: modalType.value }),
     ({ menu, modal }) => {
@@ -36,7 +50,6 @@ watch(
     { deep: true }
 );
 
-// Схемы валидации
 const schema = object({
     email: string()
         .email('Неправильне введення, example@example.com')
@@ -59,19 +72,61 @@ const regSchema = object({
         .required("Обов'язкове поле"),
 });
 
-// Типы данных для форм
 type Schema = InferType<typeof schema>;
 type RegSchema = InferType<typeof regSchema>;
 
-// Обработка отправки формы
 async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
-    console.log('Данные формы:', event.data);
+    if (modalType.value === 'reg') {
+        const { data, error } = await useFetch('/api/authentificate/create', {
+            method: 'POST',
+            body: {
+                username: state.value.name,
+                email: state.value.email,
+                password: state.value.confirmPassword,
+            },
+        });
+
+        if (error.value) {
+            console.error('Error during user creation:', error.value);
+        } else {
+            console.log('User created successfully:', data.value);
+
+            if (data.value.token) {
+                localStorage.setItem('auth_token', data.value.token);
+                console.log('Token stored in localStorage');
+                modalType.value = '';
+            } else {
+                console.error('No token received');
+            }
+        }
+    } else if (modalType.value === 'auth') {
+        const { data, error } = await useFetch('/api/authentificate/login', {
+            method: 'POST',
+            body: {
+                email: state.value.email,
+                password: state.value.password,
+            },
+        });
+
+        if (error.value) {
+            console.error('Error during user authentificate:', error.value);
+        } else {
+            console.log('User authentificated successfully:', data.value);
+
+            if (data.value.token) {
+                localStorage.setItem('auth_token', data.value.token);
+                console.log('Token stored in localStorage');
+                modalType.value          = '';
+            } else {
+                console.error('No token received');
+            }
+        }
+    }
 }
 </script>
 
 <template>
     <section id="mobile" class="pt-10 lg:hidden flex flex-row justify-between">
-        <!-- Menu and Search Icons -->
         <div class="flex flex-row items-center gap-3">
             <template v-if="!menu.links">
                 <img src="/icon/menu-variant.svg" alt="Menu" class="w-6 cursor-pointer" @click="toggleMenu('links')" />
@@ -82,12 +137,10 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
             <img src="/icon/search-mobile.svg" alt="Search" class="w-6 cursor-pointer" @click="toggleMenu('search')" />
         </div>
 
-        <!-- Logo -->
         <NuxtLink to="/" class="logo max-w-32">
             <img src="/images/logo.png" alt="Logo" />
         </NuxtLink>
 
-        <!-- User Icon -->
         <template v-if="!modalType">
             <img src="/icon/user.svg" alt="User" class="w-6 cursor-pointer" @click="openModal('auth')" />
         </template>
@@ -95,7 +148,6 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
             <img src="/icon/mobile-cross.svg" alt="Menu" class="w-6 cursor-pointer" @click="closeModal()" />
         </template>
 
-        <!-- Links Popup -->
         <div v-if="menu.links" class="fixed inset-0 w-full z-50 top-24 bg-[#F5F6F8] p-6">
             <!-- Список ссылок -->
             <ul>
@@ -150,7 +202,6 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
             </ul>
         </div>
 
-        <!-- Search Popup -->
         <div v-if="menu.search" class="fixed inset-0 w-full z-50 top-24 bg-[#F5F6F8] py-4">
             <div class="text-center">
                 <UInput type="text" placeholder="Пошук..." class="rounded w-full p-2" size="xl"
@@ -173,15 +224,14 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
                 :style="{ left: modalType === 'auth' ? '0' : '150px', width: '140px' }"></div>
         </div>
 
-        <!-- Форма авторизации -->
         <div v-if="modalType === 'auth'">
             <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
                 <UFormGroup label="Електронна адреса" name="email">
-                    <UInput v-model="email" size="xl" />
+                    <UInput v-model="state.email" size="xl" />
                 </UFormGroup>
 
                 <UFormGroup label="Пароль" name="password">
-                    <UInput v-model="password" type="password" size="xl" />
+                    <UInput v-model="state.password" type="password" size="xl" />
                     <p class="absolute right-0 top-[-24px] text-[14px] text-[#828282]">Забули пароль</p>
                 </UFormGroup>
 
@@ -191,23 +241,22 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
             </UForm>
         </div>
 
-        <!-- Форма регистрации -->
         <div v-if="modalType === 'reg'">
             <UForm :schema="regSchema" :state="state" class="space-y-4" @submit="onSubmit">
                 <UFormGroup label="Ім’я" name="name">
-                    <UInput v-model="name" size="xl" />
+                    <UInput v-model="state.name" size="xl" />
                 </UFormGroup>
 
                 <UFormGroup label="Електронна адреса" name="email">
-                    <UInput v-model="email" size="xl" />
+                    <UInput v-model="state.email" size="xl" />
                 </UFormGroup>
 
                 <UFormGroup label="Пароль" name="password">
-                    <UInput v-model="password" type="password" size="xl" />
+                    <UInput v-model="state.password" type="password" size="xl" />
                 </UFormGroup>
 
                 <UFormGroup label="Підтвердити пароль" name="confirmPassword">
-                    <UInput v-model="confirmPassword" type="password" size="xl" />
+                    <UInput v-model="state.confirmPassword" type="password" size="xl" />
                 </UFormGroup>
 
                 <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
