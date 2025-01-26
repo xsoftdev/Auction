@@ -15,7 +15,7 @@ onMounted(async () => {
             }, 1000)
         }
     }
-}); 
+});
 const menu = ref({
     links: false,
     search: false,
@@ -116,7 +116,7 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
             if (data.value.token) {
                 localStorage.setItem('auth_token', data.value.token);
                 console.log('Token stored in localStorage');
-                modalType.value          = '';
+                modalType.value = '';
             } else {
                 console.error('No token received');
             }
@@ -224,47 +224,51 @@ async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
                 :style="{ left: modalType === 'auth' ? '0' : '150px', width: '140px' }"></div>
         </div>
 
-        <div v-if="modalType === 'auth'">
-            <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-                <UFormGroup label="Електронна адреса" name="email">
-                    <UInput v-model="state.email" size="xl" />
-                </UFormGroup>
+        <!-- Обновленный контейнер с прокруткой -->
+        <div class="max-h-[340px] overflow-y-auto">
+            <div v-if="modalType === 'auth'">
+                <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
+                    <UFormGroup label="Електронна адреса" name="email">
+                        <UInput v-model="state.email" size="xl" />
+                    </UFormGroup>
 
-                <UFormGroup label="Пароль" name="password">
-                    <UInput v-model="state.password" type="password" size="xl" />
-                    <p class="absolute right-0 top-[-24px] text-[14px] text-[#828282]">Забули пароль</p>
-                </UFormGroup>
+                    <UFormGroup label="Пароль" name="password">
+                        <UInput v-model="state.password" type="password" size="xl" />
+                        <p class="absolute right-0 top-[-24px] text-[14px] text-[#828282]">Забули пароль</p>
+                    </UFormGroup>
 
-                <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
-                    <p class="text-[20px] mr-2">Увійти</p> <img src="/icon/menu-arrow.svg" alt="">
-                </UButton>
-            </UForm>
-        </div>
+                    <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
+                        <p class="text-[20px] mr-2">Увійти</p> <img src="/icon/menu-arrow.svg" alt="">
+                    </UButton>
+                </UForm>
+            </div>
 
-        <div v-if="modalType === 'reg'">
-            <UForm :schema="regSchema" :state="state" class="space-y-4" @submit="onSubmit">
-                <UFormGroup label="Ім’я" name="name">
-                    <UInput v-model="state.name" size="xl" />
-                </UFormGroup>
+            <div v-if="modalType === 'reg'">
+                <UForm :schema="regSchema" :state="state" class="space-y-4" @submit="onSubmit">
+                    <UFormGroup label="Ім’я" name="name">
+                        <UInput v-model="state.name" size="xl" />
+                    </UFormGroup>
 
-                <UFormGroup label="Електронна адреса" name="email">
-                    <UInput v-model="state.email" size="xl" />
-                </UFormGroup>
+                    <UFormGroup label="Електронна адреса" name="email">
+                        <UInput v-model="state.email" size="xl" />
+                    </UFormGroup>
 
-                <UFormGroup label="Пароль" name="password">
-                    <UInput v-model="state.password" type="password" size="xl" />
-                </UFormGroup>
+                    <UFormGroup label="Пароль" name="password">
+                        <UInput v-model="state.password" type="password" size="xl" />
+                    </UFormGroup>
 
-                <UFormGroup label="Підтвердити пароль" name="confirmPassword">
-                    <UInput v-model="state.confirmPassword" type="password" size="xl" />
-                </UFormGroup>
+                    <UFormGroup label="Підтвердити пароль" name="confirmPassword">
+                        <UInput v-model="state.confirmPassword" type="password" size="xl" />
+                    </UFormGroup>
 
-                <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
-                    <p class="text-[20px] mr-2">Зареєструватися</p> <img src="/icon/menu-arrow.svg" alt="">
-                </UButton>
-            </UForm>
+                    <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
+                        <p class="text-[20px] mr-2">Зареєструватися</p> <img src="/icon/menu-arrow.svg" alt="">
+                    </UButton>
+                </UForm>
+            </div>
         </div>
     </ReusedItemsAuthModal>
+
 </template>
 
 <style scoped>
