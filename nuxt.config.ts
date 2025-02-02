@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: false },
-  modules: ['@nuxt/ui', 'nuxt-swiper', '@nuxtjs/color-mode'],
+  modules: ['@nuxt/ui', 'nuxt-swiper', '@nuxtjs/color-mode', '@pinia/nuxt'],
   nitro: {
     plugins: ["~/server/index.ts"]
   },

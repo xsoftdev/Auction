@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { object, string, ref as yupRef, type InferType } from 'yup';
 import type { FormSubmitEvent } from '#ui/types';
+import { useUserStore } from '~/storage/userState';
 
 const schema = object({
     email: string()
@@ -36,7 +37,8 @@ const state = ref({
     password: undefined,
     name: undefined,
     confirmPassword: undefined,
-    isAuthentificate: false
+    isAuthentificate: false,
+    authentificated_user: undefined
 });
 
 onMounted(async () => {
@@ -45,14 +47,16 @@ onMounted(async () => {
         if (local) {
             state.value.isAuthentificate = true;
 
-            setTimeout(() => {
-                useFetch(`/api/authentificate/${local}`).then((res) => {
-                    state.value.name = res.data.value.user.username;
-                });
-            }, 1000)
+            const userState = useUserStore(); 
+            await userState.getUser();
+
+
+            state.value.authentificated_user = userState.user;
         }
     }
 });
+
+
 
 async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
     if (event.data.modalType === 'reg') {
@@ -145,11 +149,11 @@ const closeModal = () => {
             <div class="flex flex-row items-center">
                 <NuxtLink to="/clientarea" class="flex flex-row items-end mr-16">
                     <img src="/icon/user.svg" alt="" class="w-8 h-8 mr-4">
-                    <template v-if="state.name">
-                        <p class="text-[20px] w-[120px]">{{ state.name }}</p>
+                    <template v-if="state.name || state.authentificated_user?.username">
+                        <p class="text-[20px] w-[120px]">{{ state.name || state.authentificated_user?.username }}</p>
                     </template>
                     <template v-else>
-                        <USkeleton class="bg-gray-400 w-[120px] h-[30px]"/>
+                        <USkeleton class="bg-gray-400 w-[120px] h-[30px]" />
                     </template>
                 </NuxtLink>
                 <NuxtLink to="/clientarea/cart">
