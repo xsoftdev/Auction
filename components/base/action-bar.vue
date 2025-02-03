@@ -47,7 +47,7 @@ onMounted(async () => {
         if (local) {
             state.value.isAuthentificate = true;
 
-            const userState = useUserStore(); 
+            const userState = useUserStore();
             await userState.getUser();
 
 
@@ -59,51 +59,53 @@ onMounted(async () => {
 
 
 async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
-    if (event.data.modalType === 'reg') {
-        const { data, error } = await useFetch('/api/authentificate/create', {
-            method: 'POST',
-            body: {
-                username: state.value.name,
-                email: state.value.email,
-                password: state.value.confirmPassword,
-            },
-        });
+    try {
+        if (event.data.modalType === 'reg') {
+            const response = await useFetch('/api/authentificate/create', {
+                method: 'POST',
+                body: {
+                    username: state.value.name,
+                    email: state.value.email,
+                    password: state.value.confirmPassword,
+                },
+            });
 
-        if (error.value) {
-            console.error('Error during user creation:', error.value);
-        } else {
-            console.log('User created successfully:', data.value);
-
-            if (data.value.token) {
-                localStorage.setItem('auth_token', data.value.token);
-                console.log('Token stored in localStorage');
-                state.value.modalType = '';
+            if (response.status === 500) {
+                console.error('Error during user creation:', response.error);
             } else {
-                console.error('No token received');
+                if (response.data.value.token) {
+                    localStorage.setItem('auth_token', response.data.value.token);
+                    console.log('Token stored in localStorage');
+                    state.value.modalType = '';
+                    location.href = '/clientarea'
+                } else {
+                    console.error('No token received');
+                }
+            }
+        } else if (event.data.modalType === 'auth') {
+            const response = await useFetch('/api/authentificate/login', {
+                method: 'POST',
+                body: {
+                    email: state.value.email,
+                    password: state.value.password,
+                },
+            });
+
+            if (response.status === 500) {
+                console.error('Error during user authentication:', response.error);
+            } else {
+                if (response.data.value.token) {
+                    localStorage.setItem('auth_token', response.data.value.token);
+                    console.log('Token stored in localStorage');
+                    state.value.modalType = '';
+                    location.href = '/clientarea';
+                } else {
+                    console.error('No token received');
+                }
             }
         }
-    } else if (event.data.modalType === 'auth') {
-        const { data, error } = await useFetch('/api/authentificate/login', {
-            method: 'POST',
-            body: {
-                email: state.value.email,
-                password: state.value.password,
-            },
-        });
-
-        if (error.value) {
-            console.error('Error during user authentificate:', error.value);
-        } else {
-            console.log('User authentificated successfully:', data.value);
-
-            if (data.value.token) {
-                localStorage.setItem('auth_token', data.value.token);
-                console.log('Token stored in localStorage');
-                state.value.modalType = '';
-            } else {
-                console.error('No token received');
-            }
-        }
+    } catch (error) {
+        console.error('Error in onSubmit function:', error);
     }
 }
 

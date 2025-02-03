@@ -1,37 +1,45 @@
 <script setup lang="ts">
 import { useUserStore } from '~/storage/userState';
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-definePageMeta({
-    layout: 'default'
-})
-
+const router = useRouter();
 const userState = useUserStore();
 const userInit = ref(null);
 const loading = ref(true);
+const authToken = ref<string | null>(null);
+
+onBeforeMount(() => {
+    authToken.value = localStorage.getItem('auth_token');
+    if (!authToken.value) {
+        router.replace('/');
+    }
+});
 
 onMounted(async () => {
-    await userState.getUser();
-    userInit.value = userState.user;
+    if (authToken.value) {
+        await userState.getUser();
+        userInit.value = userState.user;
+    }
     loading.value = false;
 });
 
-// Accordion state
-const isLotiOpen = ref(false);
+    const isLotiOpen = ref(false);
 const isWalletOpen = ref(false);
-
-// Toggle accordion
 const toggleLoti = () => isLotiOpen.value = !isLotiOpen.value;
 const toggleWallet = () => isWalletOpen.value = !isWalletOpen.value;
 
-// Page toggle state
-const currentPage = ref('info'); // default page is 'info'
-
-// Switch between pages
+const currentPage = ref('info');
 const switchPage = (page: string) => {
     currentPage.value = page;
 };
+
+const logout = () => {
+    localStorage.removeItem('auth_token');
+    location.reload();
+};
 </script>
+
 
 <template>
     <div class="grid grid-cols-8 gap-4 justify-between mb-10">
@@ -98,7 +106,7 @@ const switchPage = (page: string) => {
                     <p class="text-[20px] font-medium">Створити Лот</p>
                     <img src="/icon/Plus.svg" alt="">
                 </button>
-                <button class="text-[#FF3400] text-[20px] font-medium px-6 py-3 duration-300 hover:border-[#FF3400] border-[1px] w-full text-left rounded-lg">Вийти</button>
+                <button @click="logout" class="text-[#FF3400] text-[20px] font-medium px-6 py-3 duration-300 hover:border-[#FF3400] border-[1px] w-full text-left rounded-lg">Вийти</button>
             </div>
         </aside>
         <div class="col-span-1" />

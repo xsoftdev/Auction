@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     componentName: 'ColorScheme',
     classPrefix: '',
     classSuffix: '-mode',
-    storage: 'localStorage', 
+    storage: 'localStorage',
     storageKey: 'theme'
   },
   runtimeConfig: {
@@ -22,5 +22,10 @@ export default defineNuxtConfig({
       dbConnection: process.env.URI,
       jwt: process.env.SECRET
     }
-  }
+  },
+  routeRules: {
+    '/api/**': {
+      cors: true,
+    },
+  },
 })
