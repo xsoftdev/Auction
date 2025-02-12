@@ -38,6 +38,10 @@ const logout = () => {
     localStorage.removeItem('auth_token');
     location.reload();
 };
+
+definePageMeta({
+    layout: 'default'
+})
 </script>
 
 

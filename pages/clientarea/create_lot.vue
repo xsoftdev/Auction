@@ -1,12 +1,116 @@
+<template>
+    <div class="mb-6">
+        <UBreadcrumb :links="links" />
+    </div>
+    <h3 class="mb-8 text-black_haze-900 font-bold text-[36px]">Створити Лот</h3>
+    <div class="grid lg:grid-cols-2 grid-cols-1 lg:gap-10 gap-4 mb-10">
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Назва <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UInput v-model="form.title" size="lg" />
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Стартова ціна <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UInput v-model="form.startPrice" size="lg" type="number" />
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Категорія Товару <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="selections lg:max-w-[80%] space-y-3">
+                <!-- Main Category Selection -->
+                <USelect v-model="form.category" :options="mainCategoryOptions" placeholder="Виберіть категорію"
+                    @update:model-value="onCategoryChange" size="lg" />
+
+                <!-- Subcategory Selection -->
+                <USelect v-if="showSubcategories" v-model="form.subcategory" :options="subcategoryOptions"
+                    placeholder="Виберіть підкатегорію" @update:model-value="onSubcategoryChange" size="lg" />
+
+                <!-- Section Selection -->
+                <USelect v-if="showSections" v-model="form.section" :options="sectionOptions"
+                    placeholder="Виберіть розділ" size="lg" />
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Бліц - ціна <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UInput v-model="form.startPrice" size="lg" type="number" />
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Стан Лоту <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <USelect v-model="form.quality" :options="qualityOptions" placeholder="Виберіть стан лоту" size="lg" />
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Стартова ціна <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UInput v-model="form.startPrice" size="lg" type="number" />
+            </div>
+        </div>
+    </div>
+    <ProfileUploadPhoto v-model:photos="form.photos" class="mb-10" />
+    <h3 class="mb-8 text-black_haze-900 font-bold text-[36px]">Додаткові рекламні опції</h3>
+    <ProfileCards class="mb-10" />
+    <div class="grid lg:grid-cols-2 grid-cols-1 lg:gap-10 gap-4 mb-10">
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Місцезнаходження <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UInput v-model="form.title" size="lg" placeholder="Розташування де знаходиться лот"/>
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Доставка <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <USelect :options="deliveryOptions" v-model="form.deliveryType" size="lg"/>
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Оплата <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <USelect :options="paymentOptions" v-model="form.paymentType" size="lg"/>
+            </div>
+        </div>
+        <div class="item space-y-3">
+            <label class="text-black_haze-500">
+                Опис Лоту <span class="text-[#D33535]">*</span>:
+            </label>
+            <div class="input lg:max-w-[80%]">
+                <UTextarea autoresize placeholder="Search..."
+                    model-value="Here is an autoresize Textarea, write new lines to make the Textarea grow up..." size="lg"/>
+            </div>
+        </div>
+    </div>
+    <div class="buttons mb-10 w-full">
+        <UButton size="lg" class="py-3">
+            Опублікувати
+        </UButton>
+    </div>
+</template>
+
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue'
 const categories = [
-    {
-        name: 'Нові лоти за 24 години',
-        link: '/lots?key=novye-loty-za-24-chasa',
-        subcategories: []
-    },
     {
         name: 'Приманки',
         link: '/lots?key=primanki',
@@ -174,164 +278,103 @@ const categories = [
         subcategories: []
     }
 ];
-const router = useRouter();
+const qualityOptions = ref([
+    "б/в",
+    "Новий"
+])
+const links = [{
+    label: '',
+    icon: 'i-heroicons-home',
+    to: '/'
+}, {
+    label: 'Особистий кабінет',
+    icon: '',
+    to: '/clientarea'
+}, {
+    label: 'Створити Лот',
+    icon: ''
+}]
+const paymentOptions = ref([
+    "Готівка під час зустрічі",
+    "Оплата карткою"
+])
 
-const state = ref<{ [key: string]: boolean }>({
-    categories: false,
-    subcategories: false,
-    subSubCategories: false
-});
+const deliveryOptions = ref([
+    "Нова пошта",
+    "Укрпошта",
+    "Meest",
+    "Інше"
+])
+// Form state
+const form = ref({
+    title: '',
+    startPrice: '',
+    category: '',
+    subcategory: '',
+    section: '',
+    quality: '',
+    photos: [],
+    paymentType: '',
+    deliveryType: ''
+})
 
-const activeCategory = ref<number | null>(null);
-const activeSubcategory = ref<number | null>(null);
+// Transform categories data into options format for USelect
+const mainCategoryOptions = computed(() => {
+    return categories.map(category => ({
+        label: category.name,
+        value: category.link
+    }))
+})
 
-const toggleMenu = (menu: string) => {
-    state.value[menu] = !state.value[menu];
-};
-const closeMenus = () => {
-    state.value.categories = false;
-    state.value.subcategories = false;
-    state.value.subSubCategories = false;
+// Get current category object
+const currentCategory = computed(() => {
+    return categories.find(cat => cat.link === form.value.category)
+})
+
+// Compute subcategory options based on selected category
+const subcategoryOptions = computed(() => {
+    if (!currentCategory.value) return []
+    return currentCategory.value.subcategories.map(sub => ({
+        label: sub.name,
+        value: sub.link
+    }))
+})
+
+// Get current subcategory object
+const currentSubcategory = computed(() => {
+    if (!currentCategory.value) return null
+    return currentCategory.value.subcategories.find(
+        sub => sub.link === form.value.subcategory
+    )
+})
+
+// Compute section options based on selected subcategory
+const sectionOptions = computed(() => {
+    if (!currentSubcategory.value) return []
+    return currentSubcategory.value.subcategories.map(section => ({
+        label: section.name,
+        value: section.link
+    }))
+})
+
+// Show/hide dependent dropdowns
+const showSubcategories = computed(() => {
+    return currentCategory.value?.subcategories.length > 0
+})
+
+const showSections = computed(() => {
+    return currentSubcategory.value?.subcategories.length > 0
+})
+
+// Handlers
+const onCategoryChange = () => {
+    // Reset dependent selections
+    form.value.subcategory = ''
+    form.value.section = ''
 }
 
-const toggleCategory = (index: number) => {
-    activeCategory.value = activeCategory.value === index ? null : index;
-
-        if (!categories[index].subcategories || categories[index].subcategories.length === 0) {
-            router.push(`${categories[index].link}`)
-        }
-
-    state.value.subcategories = activeCategory.value !== null;
-};
-
-const toggleSubcategory = (index: number) => {
-    activeSubcategory.value = activeSubcategory.value === index ? null : index;
-
-    state.value.subSubCategories = activeSubcategory.value !== null;
-
-    if (!categories[activeCategory.value]?.subcategories[activeSubcategory.value]?.subcategories || 
-        categories[activeCategory.value].subcategories[activeSubcategory.value].subcategories.length === 0) {
-        
-        const subcategory = categories[activeCategory.value].subcategories[activeSubcategory.value];
-        router.push(`${subcategory.link}`);
-    }
-};
+const onSubcategoryChange = () => {
+    // Reset section selection
+    form.value.section = ''
+}
 </script>
-
-<template>
-    <BaseContainer>
-        <BaseHeader />
-        <slot />
-        <BaseFooter />
-    </BaseContainer>
-
-    <!-- Mobile Controls -->
-    <div class="controls fixed bottom-0 bg-white h-20 w-full rounded-t-3xl z-50 md:hidden">
-        <div class="flex flex-row items-center justify-between p-5">
-            <NuxtLink to="/" class="flex flex-col items-center" @click="closeMenus()">
-                <img src="/icon/Home.svg" alt="" class="w-6" />
-                <p>Головна</p>
-            </NuxtLink>
-            <div class="flex flex-col items-center" @click="toggleMenu('categories')">
-                <img src="/icon/Category.svg" alt="" class="w-6" />
-                <p>Категорії</p>
-            </div>
-            <NuxtLink to="/clientarea/create_lot" class="flex flex-col items-center" @click="closeMenus()">
-                <img src="/icon/plus-add.svg" alt="" class="w-8" />
-                <p>Продати</p>
-            </NuxtLink>
-            <NuxtLink to="/liked" class="flex flex-col items-center" @click="closeMenus()">
-                <img src="/icon/Heart.svg" alt="" class="w-6" />
-                <p>Обрані</p>
-            </NuxtLink>
-            <div class="flex flex-col items-center" @click="closeMenus()">
-                <img src="/icon/Profile.svg" alt="" class="w-6" />
-                <p>Профіль</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Categories Modal -->
-    <template v-if="state.categories">
-        <div class="modal fixed inset-0 bg-black bg-opacity-50 z-40 flex flex-col justify-center items-center">
-            <div class="modal-header bg-white w-full flex flex-row justify-between items-end p-5">
-                <img src="/icon/chevron-left.svg" alt="" class="w-8 h-8" @click="toggleMenu('categories')">
-                <p class="text-[20px] font-medium">Всі категорії</p>
-                <img src="/icon/cart1.svg" alt="" class="w-8 h-8">
-            </div>
-            <div
-                class="modal-content bg-white rounded-lg w-full max-w-md h-full px-5 py-8 pt-4 overflow-y-auto space-y-1">
-                <div v-for="(category, catIndex) in categories" :key="catIndex" class="category cursor-pointer">
-                    <p class="rounded-md py-1 px-2 hover:bg-gray-200 text-[18px]" @click="toggleCategory(catIndex)">
-                        {{ category.name }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Subcategories Modal -->
-    <template v-if="state.subcategories && activeCategory !== null">
-        <div class="modal fixed inset-0 bg-black bg-opacity-50 z-40 flex flex-col justify-center items-center">
-            <div class="modal-header bg-white w-full flex flex-row justify-between items-end p-5">
-                <img src="/icon/chevron-left.svg" alt="" class="w-8 h-8" @click="toggleMenu('subcategories')">
-                <p class="text-[20px] font-medium">Всі категорії</p>
-                <img src="/icon/cart1.svg" alt="" class="w-8 h-8">
-            </div>
-            <div
-                class="modal-content bg-white rounded-lg w-full max-w-md h-full px-5 py-8 pt-4 overflow-y-auto space-y-1">
-                <div v-for="(subCategory, subIndex) in categories[activeCategory].subcategories" :key="subIndex"
-                    class="subCategory cursor-pointer">
-                    <p class="rounded-md py-1 px-2 hover:bg-gray-200 text-[18px]" @click="toggleSubcategory(subIndex)">
-                        {{ subCategory.name }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Sub-Subcategories Modal -->
-    <template
-        v-if="state.subSubCategories && activeSubcategory !== null && categories[activeCategory]?.subcategories[activeSubcategory]?.subcategories?.length">
-        <div class="modal fixed inset-0 bg-black bg-opacity-50 z-40 flex flex-col justify-center items-center">
-            <div class="modal-header bg-white w-full flex flex-row justify-between items-end p-5">
-                <img src="/icon/chevron-left.svg" alt="" class="w-8 h-8" @click="toggleMenu('subSubCategories')">
-                <p class="text-[20px] font-medium">Всі категорії</p>
-                <img src="/icon/cart1.svg" alt="" class="w-8 h-8">
-            </div>
-            <div
-                class="modal-content bg-white rounded-lg w-full max-w-md h-full px-5 py-8 pt-4 overflow-y-auto space-y-1">
-                <div v-for="(subSubCategory, subSubIndex) in categories[activeCategory].subcategories[activeSubcategory].subcategories"
-                    :key="subSubIndex" class="cursor-pointer">
-                    <p class="rounded-md py-1 px-2 hover:bg-gray-200 text-[18px]" @click="router.push(subSubCategory.link)">
-                        {{ subSubCategory.name }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </template>
-</template>
-
-<style scoped>
-.modal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.modal-content {
-    max-width: 600px;
-    min-height: 50%;
-    max-height: 100vh;
-    overflow-y: auto;
-    padding-bottom: 120px;
-}
-
-.close-btn {
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-    color: black;
-}
-</style>

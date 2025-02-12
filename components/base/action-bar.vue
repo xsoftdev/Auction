@@ -164,7 +164,7 @@ const closeModal = () => {
             </div>
         </template>
 
-        <div class="absolute top-32 w-full bg-[#F5F6F8] border-black" v-if="state.menuCategories">
+        <div class="absolute top-32 w-full bg-[#F5F6F8] border-black z-20" v-if="state.menuCategories">
             <ReusedItemsCategoryMenu />
         </div>
 
