@@ -3,7 +3,14 @@ import { ref } from 'vue';
 import { object, string, ref as yupRef, type InferType } from 'yup';
 import type { FormSubmitEvent } from '#ui/types';
 import { useUserStore } from '~/storage/userState';
-
+import { useRoute } from 'vue-router';
+const route = useRoute();
+watch(
+    () => route.path,
+    (newPath, oldPath) => {
+        console.log(`Путь изменился: ${oldPath} → ${newPath}`);
+    }
+);
 const schema = object({
     email: string()
         .email('Неправильне введення, example@example.com')

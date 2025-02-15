@@ -106,10 +106,10 @@ definePageMeta({
                 <button @click="switchPage('notification')" class="hover:bg-[#D9D9D9] py-3 px-6 rounded-lg w-full text-left mb-5 text-[20px] duration-300 font-medium">Повідомлення</button>
 
                 <button class="py-3 px-6 hover:bg-[#D9D9D9] w-full text-left mb-5 rounded-lg text-[20px] duration-300 font-medium">Тех. <span class="text-[#FF3400]">Підтримка</span></button>
-                <button class="mb-5 bg-[#333333] hover:bg-[#333333] hover:opacity-90 duration-300 text-white py-3 px-6 rounded-lg flex flex-row items-end w-full justify-between">
+                <NuxtLink to="/clientarea/create_lot" class="mb-5 bg-[#333333] hover:bg-[#333333] hover:opacity-90 duration-300 text-white py-3 px-6 rounded-lg flex flex-row items-end w-full justify-between">
                     <p class="text-[20px] font-medium">Створити Лот</p>
                     <img src="/icon/Plus.svg" alt="">
-                </button>
+                </NuxtLink>
                 <button @click="logout" class="text-[#FF3400] text-[20px] font-medium px-6 py-3 duration-300 hover:border-[#FF3400] border-[1px] w-full text-left rounded-lg">Вийти</button>
             </div>
         </aside>

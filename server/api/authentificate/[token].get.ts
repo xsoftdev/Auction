@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const config = useRuntimeConfig();
 const JWT_SECRET = config.public.jwt;
-const JWT_EXPIRES_IN = "1h"; // Задай нужный срок действия токена
+const JWT_EXPIRES_IN = "1h";
 
 export default defineEventHandler(async (event: H3Event) => {
     try {
@@ -26,6 +26,11 @@ export default defineEventHandler(async (event: H3Event) => {
                 }
             } else {
                 throw new Error("Invalid or expired token");
+
+                return {
+                    success: false,
+                    message: "Invalid or expired token"
+                }
             }
         }
 

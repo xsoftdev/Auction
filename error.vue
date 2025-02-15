@@ -39,7 +39,7 @@ const goToHome = () => {
             <!-- Error Description -->
             <p class="text-[16px] sm:text-[18px] text-gray-500 max-w-[540px] mx-auto mb-6">
                 Щось пішло не так. Схоже, що ваш запит не може бути знайдений. Спробуйте ще раз або поверніться пізніше.
-                <!-- {{ error?.message }} -->
+                {{ error?.message }}
             </p>
 
             <!-- Buttons -->
