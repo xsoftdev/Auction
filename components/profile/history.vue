@@ -1,41 +1,71 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useUserStore } from '@/storage/userState';
 
-const people = [
-    { id: 1, index: '#15267', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/15267', status: 'В процесі', commission: '10 грн' },
-    { id: 2, index: '#153587', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/153587', status: 'Успіх', commission: '5 грн' },
-    { id: 3, index: '#12436', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/12436', status: 'Успіх', commission: '5 грн' },
-    { id: 4, index: '#16879', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/16879', status: 'Успіх', commission: '5 грн' },
-    { id: 5, index: '#16378', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/16378', status: 'Відмова', commission: '5 грн' },
-    { id: 6, index: '#16609', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/16609', status: 'Успіх', commission: '5 грн' },
-    { id: 7, index: '#16907', date: '11.10.2025', summ: '1000 грн', lot_name: 'Название лота', lot_link: '/lot/16907', status: 'Успіх', commission: '5 грн' }
-]
+const userStore = useUserStore();
+const { user } = storeToRefs(userStore);
 
+// Функция для форматирования даты
+const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('uk-UA');
+};
+
+// Преобразование истории баланса в формат для таблицы
+const transactionHistory = computed(() => {
+    return user.value.balanceHistory.map((transaction, index) => ({
+        id: index + 1,
+        index: `#000${index + 1}`, // или можно использовать реальный ID транзакции, если есть
+        date: formatDate(transaction.createdAt),
+        summ: `${(transaction.amount).toFixed(1)} ${user.value.balance.currency}`,
+        desc: transaction.description,
+        lot_link: transaction.type === 'purchase' ? `/lot/${transaction.lotId}` : null,
+        status: getStatusText(transaction.type),
+    }));
+});
+
+// Функция для определения статуса транзакции
+const getStatusText = (type: string) => {
+    switch (type) {
+        case 'deposit':
+            return 'Успіх';
+        case 'withdrawal':
+            return 'Успіх';
+        case 'purchase':
+            return 'В процесі';
+        case 'sale':
+            return 'Успіх';
+        default:
+            return 'Відмова';
+    }
+};
 
 const columns = [
     { key: 'id', label: 'id' },
     { key: 'index', label: 'ID Операции' },
     { key: 'date', label: 'Дата' },
     { key: 'summ', label: 'Сума' },
-    { key: 'lot_name', label: 'Назва лоту' },
+    { key: 'desc', label: 'Опис' },
     { key: 'status', label: 'Статус' },
-    { key: 'commission', label: 'Комісія' }
-]
+];
 
-const selected = ref([people[0]])
+const selected = ref([]);
 
 function select(row) {
-
-    const index = selected.value.findIndex(item => item.id === row.id)
+    const index = selected.value.findIndex(item => item.id === row.id);
     if (index === -1) {
-        selected.value.push(row)
+        selected.value.push(row);
     } else {
-        selected.value.splice(index, 1)
+        selected.value.splice(index, 1);
     }
 }
 </script>
 
 <template>
     <p class="text-[#23262F] font-[600] text-[36px] mb-12">Історія платежів</p>
-    <UTable v-model="selected" :rows="people" :columns="columns" @select="select" />
+    <template v-if="transactionHistory.length">
+        <UTable v-model="selected" :rows="transactionHistory" :columns="columns" @select="select" />
+    </template>
+    <p v-else class="text-center text-gray-500 py-8">
+        Історія платежів порожня
+    </p>
 </template>

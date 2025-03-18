@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { object, string, ref as yupRef, type InferType } from 'yup';
+import axios from 'axios'
 import type { FormSubmitEvent } from '#ui/types';
 // onMounted(async () => {
 //     if (typeof window !== 'undefined') {
@@ -49,7 +50,22 @@ watch(
     },
     { deep: true }
 );
+const showNotification = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
+    // Можно добавить уведомления в мобильную версию или использовать console.log
+    console.log(`${type}: ${message}`);
 
+    // Если хотите добавить полноценные уведомления, нужно создать state для них:
+    // state.value.notification = {
+    //     show: true,
+    //     message,
+    //     type
+    // };
+
+    // И скрывать через таймаут
+    // setTimeout(() => {
+    //     state.value.notification.show = false;
+    // }, 5000);
+};
 const schema = object({
     email: string()
         .email('Неправильне введення, example@example.com')
@@ -75,54 +91,66 @@ const regSchema = object({
 type Schema = InferType<typeof schema>;
 type RegSchema = InferType<typeof regSchema>;
 
-    async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
+async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
     try {
         if (modalType.value === 'reg') {
-            const response = await useFetch('/api/authentificate/create', {
-                method: 'POST',
-                body: {
+            try {
+                const response = await axios.post('http://38.180.227.189:9000/api/auth/register', {
                     username: state.value.name,
                     email: state.value.email,
                     password: state.value.confirmPassword,
-                },
-            });
+                });
 
-            if (response.status === 500) {
-                console.error('Error during user creation:', response.error);
-            } else {
-                if (response.data.value.token) {
-                    localStorage.setItem('auth_token', response.data.value.token);
-                    console.log('Token stored in localStorage');
-                    modalType.value = '';
-                    location.href = '/clientarea'
+                // Проверка на success: false в ответе
+                if (!response.data.success) {
+                    showNotification(response.data.message, 'error');
+                    return;
                 } else {
-                    console.error('No token received');
+                    modalType.value = 'auth';
+                    showNotification('Реєстрація успішна. Увійдіть у ваш акаунт', 'success');
+                }
+            } catch (error: any) {
+                // Обработка ошибок axios
+                if (error.response && error.response.data && error.response.data.message) {
+                    showNotification(error.response.data.message, 'error');
+                } else {
+                    showNotification('Виникла невідома помилка', 'error');
                 }
             }
         } else if (modalType.value === 'auth') {
-            const response = await useFetch('/api/authentificate/login', {
-                method: 'POST',
-                body: {
+            try {
+                const response = await axios.post('http://38.180.227.189:9000/api/auth/login', {
                     email: state.value.email,
-                    password: state.value.password,
-                },
-            });
+                    password: state.value.password
+                });
 
-            if (response.status === 500) {
-                console.error('Error during user authentication:', response.error);
-            } else {
-                if (response.data.value.token) {
-                    localStorage.setItem('auth_token', response.data.value.token);
-                    console.log('Token stored in localStorage');
+                // Проверка на success: false в ответе
+                if (response.data && response.data.success === false) {
+                    showNotification(response.data.message, 'error');
+                    return;
+                }
+
+                // Успешный случай
+                if (response?.data.success) {
+                    localStorage.setItem('auth_token', response.data.data.token);
+                    showNotification('Автентифікація успішна', 'success');
                     modalType.value = '';
                     location.href = '/clientarea';
                 } else {
-                    console.error('No token received');
+                    showNotification('Виникла невідома помилка', 'error');
+                }
+            } catch (error: any) {
+                // Обработка ошибок axios
+                if (error.response && error.response.data && error.response.data.message) {
+                    showNotification(error.response.data.message, 'error');
+                } else {
+                    showNotification('Виникла невідома помилка', 'error');
                 }
             }
         }
     } catch (error) {
         console.error('Error in onSubmit function:', error);
+        showNotification('Виникла невідома помилка', 'error');
     }
 }
 </script>

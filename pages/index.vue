@@ -1,7 +1,7 @@
 <template>
-  <BaseHero />
-  <ReusedItemsSlider :title="'Топ лоти'" :link="'/lots?key=top'" />
-  <ReusedItemsSlider :title="'Нові'" :link="'/lots?key=new'" />
-  <ReusedItemsSlider :title="'Популярні Лоти'" :link="'/lots?key=popular'" />
-  <ReusedItemsSlider :title="'Від 1 грн'" :link="'/lots?key=1grn'" />
-</template> 
+    <BaseHero />
+    <ReusedItemsSlider :title="'Топ лоти'" :link="'/lots/ending-soon'" />
+    <ReusedItemsSlider :title="'Нові'" :link="'/lots/new'" />
+    <ReusedItemsSlider :title="'Популярні Лоти'" :link="'/lots/popular'" />
+    <ReusedItemsSlider :title="'Від 1 грн'" :link="'/lots/from-1-uah'" />
+</template>

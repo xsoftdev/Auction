@@ -3,7 +3,7 @@
         <!-- Logo and Description -->
         <div class="company-details max-w-[390px] mb-8 lg:mb-0 lg:block hidden">
             <NuxtLink to="/" class="logo">
-                <img src="/images/logo.png" alt="Logo"/>
+                <img src="/images/logo.png" alt="Logo" />
             </NuxtLink>
             <div class="description text-[#9A9A9A] text-[14px] sm:text-[16px] lg:text-[18px] mt-5">
                 Тут трішки інформації про вас. Тут трішки інформації про вас. Тут трішки інформації про вас. Тут трішки
@@ -35,7 +35,7 @@
         <ul class="list mb-8 lg:mb-0">
             <li class="font-semibold text-[18px] sm:text-[20px] lg:text-[24px] mb-6">Тех.підтримка</li>
             <li class="mb-4">
-                <NuxtLink to="/support">Звернутись в підтримку</NuxtLink>
+                <NuxtLink to="https://t.me/auctionbaitsUA">Звернутись в підтримку</NuxtLink>
             </li>
             <li class="mb-4">
                 <NuxtLink to="/privacy">Політика конфіденційності</NuxtLink>
@@ -67,9 +67,11 @@
         padding: 16px;
         border-top: 1px solid #E0E2E6;
     }
+
     .list {
         margin-bottom: 16px;
     }
+
     .description {
         font-size: 14px;
     }

@@ -5,6 +5,8 @@ import type { FormSubmitEvent } from '#ui/types';
 import { useUserStore } from '~/storage/userState';
 import { useRoute } from 'vue-router';
 const route = useRoute();
+import axios from 'axios'
+
 watch(
     () => route.path,
     (newPath, oldPath) => {
@@ -33,7 +35,26 @@ const regSchema = object({
         .oneOf([yupRef('password')], 'Паролі мають співпадати')
         .required("Обов'язкове поле"),
 });
+const forgotSchema = object({
+    email: string()
+        .email('Неправильне введення, example@example.com')
+        .required("Обов'язкове поле"),
+});
 
+const codeSchema = object({
+    code: string()
+        .length(6, 'Код має містити 6 цифр')
+        .required("Обов'язкове поле"),
+    newPassword: string()
+        .min(8, 'Має бути понад 8 символів')
+        .required("Обов'язкове поле"),
+    confirmNewPassword: string()
+        .oneOf([yupRef('newPassword')], 'Паролі мають співпадати')
+        .required("Обов'язкове поле"),
+});
+
+type ForgotSchema = InferType<typeof forgotSchema>;
+type CodeSchema = InferType<typeof codeSchema>;
 type Schema = InferType<typeof schema>;
 type RegSchema = InferType<typeof regSchema>;
 
@@ -45,7 +66,15 @@ const state = ref({
     name: undefined,
     confirmPassword: undefined,
     isAuthentificate: false,
-    authentificated_user: undefined
+    authentificated_user: undefined,
+    code: undefined,
+    newPassword: undefined,
+    confirmNewPassword: undefined,
+    notification: {
+        show: false,
+        message: '',
+        type: 'error' // 'error', 'success', 'info'
+    }
 });
 
 onMounted(async () => {
@@ -54,65 +83,162 @@ onMounted(async () => {
         if (local) {
             state.value.isAuthentificate = true;
 
-            const userState = useUserStore();
-            await userState.getUser();
+            const userStore = useUserStore();
+            await userStore.getUser();
 
 
-            state.value.authentificated_user = userState.user;
+            state.value.authentificated_user = userStore.user;
         }
     }
 });
 
+// Функция для отображения уведомлений
+const showNotification = (message: string, type: 'error' | 'success' | 'info' = 'error') => {
+    state.value.notification.show = true;
+    state.value.notification.message = message;
+    console.log(state.value.notification.message);
+    state.value.notification.type = type;
 
-
+    // Автоматически скрыть уведомление через 5 секунд
+    setTimeout(() => {
+        state.value.notification.show = false;
+    }, 5000);
+};
 async function onSubmit(event: FormSubmitEvent<Schema | RegSchema>) {
     try {
         if (event.data.modalType === 'reg') {
-            const response = await useFetch('/api/authentificate/create', {
-                method: 'POST',
-                body: {
-                    username: state.value.name,
-                    email: state.value.email,
-                    password: state.value.confirmPassword,
-                },
-            });
+            try {
+                const response = await $fetch('http://38.180.227.189:9000/api/auth/register', {
+                    method: 'POST',
+                    body: {
+                        username: state.value.name,
+                        email: state.value.email,
+                        password: state.value.confirmPassword,
+                    },
+                });
 
-            if (response.status === 500) {
-                console.error('Error during user creation:', response.error);
-            } else {
-                if (response.data.value.token) {
-                    localStorage.setItem('auth_token', response.data.value.token);
-                    console.log('Token stored in localStorage');
-                    state.value.modalType = '';
-                    location.href = '/clientarea'
+                // Проверка на success: false в ответе
+                if (!response) {
+                    showNotification(response.message);
+                    return;
                 } else {
-                    console.error('No token received');
+                    state.value.modalType = 'auth';
+                }
+
+                // Успешный случай
+                if (response) {
+                } else {
+                    showNotification('Виникла невідома помилка');
+                }
+            } catch (error: any) {
+                // Обработка ошибок $fetch
+                if (error.data && error.data.message) {
+                    showNotification(error.data.message);
+                } else {
+                    showNotification('Виникла невідома помилка');
                 }
             }
         } else if (event.data.modalType === 'auth') {
-            const response = await useFetch('/api/authentificate/login', {
-                method: 'POST',
-                body: {
+            try {
+                const response = await axios.post('http://38.180.227.189:9000/api/auth/login', {
                     email: state.value.email,
-                    password: state.value.password,
-                },
-            });
+                    password: state.value.password
+                });
 
-            if (response.status === 500) {
-                console.error('Error during user authentication:', response.error);
-            } else {
-                if (response.data.value.token) {
-                    localStorage.setItem('auth_token', response.data.value.token);
-                    console.log('Token stored in localStorage');
+                // Проверка на success: false в ответе
+                if (response && response.data.success === false) {
+                    showNotification(response.message, 'error');
+                    return;
+                }
+
+                // Успешный случай
+                console.log(response.data.success);
+
+                if (response?.data.success) {
+                    localStorage.setItem('auth_token', response.data.data.token);
+                    showNotification('Автентифікація успішна', 'success');
                     state.value.modalType = '';
                     location.href = '/clientarea';
                 } else {
-                    console.error('No token received');
+                    showNotification('Виникла невідома помилка');
+                }
+            } catch (error: any) {
+                // Обработка ошибок $fetch
+                if (error.data && error.data.message) {
+                    showNotification(error.data.message);
+                } else {
+                    showNotification('Виникла невідома помилка');
+                }
+            }
+        } else if (event.data.modalType === 'forgot') {
+            try {
+                const response = await $fetch('http://38.180.227.189:9000/api/authentificate/reset_req', {
+                    method: 'POST',
+                    body: {
+                        email: state.value.email,
+                    },
+                });
+
+                // Проверка на success: false в ответе
+                if (response && response.success === false) {
+                    showNotification(response.message);
+                    return;
+                }
+
+                // Успешный случай
+                if (response?.success) {
+                    showNotification('Код відновлення надіслано на вашу електронну адресу', 'success');
+                    state.value.modalType = 'code';
+                } else {
+                    showNotification('Виникла невідома помилка');
+                }
+            } catch (error: any) {
+                // Обработка ошибок $fetch
+                if (error.data && error.data.message) {
+                    showNotification(error.data.message);
+                } else {
+                    showNotification('Виникла невідома помилка');
+                }
+            }
+        }
+        else if (event.data.modalType === 'code') {
+            try {
+                const response = await $fetch('http://38.180.227.189:9000/api/auth/register', {
+                    method: 'POST',
+                    body: {
+                        email: state.value.email,
+                        code: state.value.code,
+                        newPassword: state.value.newPassword,
+                    },
+                });
+
+                // Проверка на success: false в ответе
+                if (response && response.success === false) {
+                    showNotification(response.message);
+                    return;
+                }
+
+                // Успешный случай
+                if (response?.success && response.token) {
+                    localStorage.setItem('auth_token', response.token);
+                    showNotification('Пароль успішно змінено', 'success');
+                    state.value.modalType = '';
+                    location.href = '/clientarea';
+                } else {
+                    showNotification('Виникла невідома помилка');
+                }
+            } catch (error: any) {
+                // Обработка ошибок $fetch
+                if (error.data && error.data.message) {
+                    showNotification(error.data.message);
+                } else {
+                    showNotification('Виникла невідома помилка');
                 }
             }
         }
     } catch (error) {
         console.error('Error in onSubmit function:', error);
+        showNotification('Виникла невідома помилка');
     }
 }
 
@@ -120,12 +246,16 @@ const toggleState = (key: keyof typeof state.value) => {
     state.value[key] = !state.value[key];
 };
 
-const openModal = (type: 'reg' | 'auth') => {
+const openModal = (type: 'reg' | 'auth' | 'forgot' | 'code') => {
     state.value.modalType = type;
+    // Сбрасываем уведомления при открытии модального окна
+    state.value.notification.show = false;
 };
 
 const closeModal = () => {
     state.value.modalType = '';
+    // Сбрасываем уведомления при закрытии модального окна
+    state.value.notification.show = false;
 };
 
 </script>
@@ -142,7 +272,7 @@ const closeModal = () => {
                 <p class="text-[24px] font-[400]">Всі категорії</p>
             </UButton>
         </div>
-        <div class="search min-w-[430px]">
+        <div class="search min-w-[480px]">
             <UInput icon="i-heroicons-magnifying-glass-20-solid" size="xl" color="white" :trailing="false"
                 placeholder="Пошук" />
         </div>
@@ -156,7 +286,7 @@ const closeModal = () => {
         </template>
         <template v-else>
             <div class="flex flex-row items-center">
-                <NuxtLink to="/clientarea" class="flex flex-row items-end mr-16">
+                <NuxtLink to="/clientarea" class="flex flex-row items-end">
                     <img src="/icon/user.svg" alt="" class="w-8 h-8 mr-4">
                     <template v-if="state.name || state.authentificated_user?.username">
                         <p class="text-[20px] w-[120px]">{{ state.name || state.authentificated_user?.username }}</p>
@@ -164,9 +294,6 @@ const closeModal = () => {
                     <template v-else>
                         <USkeleton class="bg-gray-400 w-[120px] h-[30px]" />
                     </template>
-                </NuxtLink>
-                <NuxtLink to="/clientarea/cart">
-                    <img src="/icon/cart1.svg" alt="" class="w-8 h-8">
                 </NuxtLink>
             </div>
         </template>
@@ -190,16 +317,25 @@ const closeModal = () => {
                     :style="{ left: state.modalType === 'auth' ? '0' : '375px', width: '220px' }"></div>
             </div>
 
+            <!-- Уведомления -->
+            <UAlert v-if="state.notification.show" :title="state.notification.message"
+                :icon="state.notification.type === 'success' ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-circle'"
+                class="mb-4">
+            </UAlert>
+
             <!-- Форма авторизации -->
             <div v-if="state.modalType === 'auth'">
                 <UForm :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
                     <UFormGroup label="Електронна адреса" name="email">
-                        <UInput v-model="state.email" size="xl" />
+                        <UInput v-model="state.email" size="xl" autocomplete="email" />
                     </UFormGroup>
 
                     <UFormGroup label="Пароль" name="password">
-                        <UInput v-model="state.password" type="password" size="xl" />
-                        <p class="absolute right-0 top-[-24px] text-[14px] text-[#828282]">Забули пароль</p>
+                        <UInput v-model="state.password" type="password" size="xl" autocomplete="current-password" />
+                        <p class="absolute right-0 top-[-24px] text-[14px] text-[#828282] cursor-pointer"
+                            @click="openModal('forgot')">
+                            Забули пароль
+                        </p>
                     </UFormGroup>
 
                     <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
@@ -207,24 +343,69 @@ const closeModal = () => {
                     </UButton>
                 </UForm>
             </div>
+            <div v-if="state.modalType === 'forgot' || state.modalType === 'code'" class="mb-10">
+                <h2 class="text-[24px] font-medium text-center">
+                    {{ state.modalType === 'forgot' ? 'Відновлення паролю' : 'Введіть код' }}
+                </h2>
+            </div>
 
+            <!-- Форма восстановления пароля -->
+            <div v-if="state.modalType === 'forgot'">
+                <UForm :schema="forgotSchema" :state="state" class="space-y-4" @submit="onSubmit">
+                    <UFormGroup label="Електронна адреса" name="email">
+                        <UInput v-model="state.email" size="xl" autocomplete="email" />
+                    </UFormGroup>
+
+                    <p class="text-[14px] text-gray-500 text-center mb-4">
+                        На вашу електронну адресу буде відправлено код підтвердження
+                    </p>
+
+                    <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
+                        <p class="text-[20px] mr-2">Відправити код</p>
+                        <img src="/icon/menu-arrow.svg" alt="">
+                    </UButton>
+                </UForm>
+            </div>
+
+            <!-- Форма ввода кода и нового пароля -->
+            <div v-if="state.modalType === 'code'">
+                <UForm :schema="codeSchema" :state="state" class="space-y-4" @submit="onSubmit">
+                    <UFormGroup label="Код підтвердження" name="code">
+                        <UInput v-model="state.code" size="xl" autocomplete="one-time-code" />
+                    </UFormGroup>
+
+                    <UFormGroup label="Новий пароль" name="newPassword">
+                        <UInput v-model="state.newPassword" type="password" size="xl" autocomplete="new-password" />
+                    </UFormGroup>
+
+                    <UFormGroup label="Підтвердіть новий пароль" name="confirmNewPassword">
+                        <UInput v-model="state.confirmNewPassword" type="password" size="xl"
+                            autocomplete="new-password" />
+                    </UFormGroup>
+
+                    <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
+                        <p class="text-[20px] mr-2">Змінити пароль</p>
+                        <img src="/icon/menu-arrow.svg" alt="">
+                    </UButton>
+                </UForm>
+            </div>
             <!-- Форма регистрации -->
             <div v-if="state.modalType === 'reg'">
                 <UForm :schema="regSchema" :state="state" class="space-y-4" @submit="onSubmit">
-                    <UFormGroup label="Ім’я" name="name">
-                        <UInput v-model="state.name" size="xl" />
+                    <UFormGroup label="Ім'я" name="name">
+                        <UInput v-model="state.name" size="xl" autocomplete="name" />
                     </UFormGroup>
 
                     <UFormGroup label="Електронна адреса" name="email">
-                        <UInput v-model="state.email" size="xl" />
+                        <UInput v-model="state.email" size="xl" autocomplete="email" />
                     </UFormGroup>
 
                     <UFormGroup label="Пароль" name="password">
-                        <UInput v-model="state.password" type="password" size="xl" />
+                        <UInput v-model="state.password" type="password" size="xl" autocomplete="new-password" />
                     </UFormGroup>
 
                     <UFormGroup label="Підтвердити пароль" name="confirmPassword">
-                        <UInput v-model="state.confirmPassword" type="password" size="xl" />
+                        <UInput v-model="state.confirmPassword" type="password" size="xl" autocomplete="new-password" />
                     </UFormGroup>
 
                     <UButton type="submit" size="xl" class="w-full flex justify-center max-w-[400px] mx-auto">
